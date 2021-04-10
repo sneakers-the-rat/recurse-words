@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "recurse-words"
-version = "0.1.0"
+version = "0.2.0"
 description = "find words that have other words in them that when you take the inner words out what's left is still a word"
 authors = ["sneakers-the-rat <JLSaunders987@gmail.com>"]
 license = "Unlicense"

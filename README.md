@@ -48,3 +48,10 @@ Draw network graphs!
 recurser.draw_graph('some_word', '/output/directory')
 ```
 
+Auto-download different corpuses!
+
+```python
+recurser = Recurser(corpus='english')
+recurser = Recurser(corpus='phonetic')
+```
+

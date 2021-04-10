@@ -279,7 +279,7 @@ class Recurser(object):
         return self._by_depth
 
     def draw_graph(self, trees:typing.Union[dict, list, str], output_dir:Path, extension:str=".svg",
-                   graph_attr:dict={}, node_attr:dict={},edge_attr:dict={}):
+                   graph_attr:dict={}, node_attr:dict={},edge_attr:dict={},translate=True):
         """
         Draw a network diagram of a recurseword tree
 
@@ -301,6 +301,9 @@ class Recurser(object):
             trees = {word:self.word_trees[word] for word in trees}
 
         for word, tree in tqdm(trees.items()):
+            if hasattr(self.corpus, '_phone_to_word') and translate is True:
+                word = self.corpus._phone_to_word[word]
+                tree = recursive_translate(tree, self.corpus._phone_to_word)
             g = pgv.AGraph(directed=True,
                            strict=False,
                            title=word)
@@ -380,6 +383,16 @@ def count_leaves(in_list) -> int:
     for parent, replace, child in recursive_walk(in_list):
         words.extend([parent, child])
     return len(set(words))
+
+
+def recursive_translate(in_list:list, lut:dict) -> list:
+    translated = []
+    for item in in_list:
+        if isinstance(item, list):
+            translated.append(recursive_translate(item, lut))
+        else:
+            translated.append(tuple((lut[i] for i in item)))
+    return translated
 
 
 
