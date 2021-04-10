@@ -12,6 +12,7 @@ readme = "README.md"
 python = "^3.7"
 tqdm = "^4.60.0"
 pygraphviz = "^1.7"
+requests = "^2.25.1"
 
 [tool.poetry.dev-dependencies]
 

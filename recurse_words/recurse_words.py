@@ -7,6 +7,9 @@ import typing
 from tqdm import tqdm
 import pygraphviz as pgv
 
+from recurse_words.corpi import get_corpus
+
+
 
 class Recurser(object):
     """
@@ -25,15 +28,21 @@ class Recurser(object):
             they're combined in nested lists
     """
 
-    def __init__(self, filename, internal_only=True):
+    def __init__(self, corpus:str, internal_only=True):
         """
         Args:
-            filename (path): file that has all the words in it
+            corpus (path): text corpus! if a file, use the default corpi.Txt corpus loader,
+                otherwise use the `'name'` attribute of the loader like "english"
             internal_only (bool): Whether to consider matching strings only if they are
                 in the interior of the word, as opposed to the beginning or end (ie. exclude
                 matches that are prefixes/suffixes).
         """
-        self.filename = filename
+        corpus_obj = get_corpus(corpus)
+        if corpus_obj is None:
+            self.corpus = get_corpus('txt')(path=corpus)
+        else:
+            self.corpus = corpus_obj()
+
         self.internal_only = internal_only
         self.words = {} # type: typing.Dict[int, typing.List[str,...]]
         self._words = {}
@@ -46,23 +55,22 @@ class Recurser(object):
         self._by_depth = {}
         self._by_leaves = {}
 
-        self.import_words()
+        self.load_words(self.corpus.corpus)
         self.word_trees = {} # type: typing.Dict[str, typing.List[typing.Union[typing.List, typing.Tuple[str,str,str]],...]]
 
-    def import_words(self):
+    def load_words(self, corpus:typing.List[str]):
         word_lengths = {}
         # make another one where instead of a list of words we store a
         # dict of words mapped to 1 for faster lookup
         word_lengths_dict = {}
-        with open(self.filename, 'r') as word_file:
-            for word in tqdm(word_file):
-                word = word.rstrip('\r\n')
-                if len(word) in word_lengths.keys():
-                    word_lengths[len(word)].append(word)
-                    word_lengths_dict[len(word)][word] = 1
-                else:
-                    word_lengths[len(word)] = [word]
-                    word_lengths_dict[len(word)] = {word:1}
+        for word in tqdm(corpus):
+            word = word.rstrip('\r\n')
+            if len(word) in word_lengths.keys():
+                word_lengths[len(word)].append(word)
+                word_lengths_dict[len(word)][word] = 1
+            else:
+                word_lengths[len(word)] = [word]
+                word_lengths_dict[len(word)] = {word:1}
 
         self.words = word_lengths
         self._words = word_lengths_dict
