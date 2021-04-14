@@ -3,8 +3,21 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to recurse-words's documentation!
+recurse-words
 =========================================
+
+.. figure:: img/shader_phonetic_common_smol.png
+   :width: 100%
+   :figwidth: 80%
+   :align: center
+
+   *aka recursed-words*
+
+
+
+*aka recursed-words*
+
+
 
 .. toctree::
    :maxdepth: 2

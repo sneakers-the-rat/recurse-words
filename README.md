@@ -18,9 +18,9 @@ recurser.recurse_all_words(
 Graph(recurser).render_graph('img').save('/some/path.png')
 ```
 
-![The replacement, addition, and subtraction structure of the phonetic transcription of the 10,000 most common english words](examples/img/shader_phonetic_common.png)
+![The replacement, addition, and subtraction structure of the phonetic transcription of the 10,000 most common english words](docs/img/shader_phonetic_common_smol.png)
 
-# [docs are here!!!](https://recurse-words.readthedocs.io/en/latest/?badge=latest)
+# [docs are here!!!](https://recurse-words.readthedocs.io/en/latest/)
 
 main docs at https://recurse-words.readthedocs.io/
 ```
