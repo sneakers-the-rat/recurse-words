@@ -8,15 +8,10 @@ recurse-words
 
 .. figure:: img/shader_phonetic_common_smol.png
    :width: 100%
-   :figwidth: 80%
+   :figwidth: 100%
    :align: center
 
    *aka recursed-words*
-
-
-
-*aka recursed-words*
-
 
 
 .. toctree::
