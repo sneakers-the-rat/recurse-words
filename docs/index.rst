@@ -8,7 +8,21 @@ Welcome to recurse-words's documentation!
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Getting Started
+
+   Installation <installation>
+   Overview <overview>
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Examples
+
+   Basic Usage <examples/basic_usage>
+   Visualizing with Datashader <examples/datashader>
+
+.. toctree::
+   :maxdepth: 2
+   :caption: API Documentation:
 
    Recursers <api/recursers>
    Corpi <api/corpi>

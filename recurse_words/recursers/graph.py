@@ -14,8 +14,21 @@ from recurse_words import Recurser
 class Graph_Recurser(Recurser):
     """
     Turns out its a aa a lll a grappp hhh maaaaeeeennnnnn
+
+    This class will eventually replace :class:`.Recurser` as there's no reason to have both I
+    just didn't want to screw that one up is all.
+
     """
     def __init__(self, corpus, subtractions:bool=True, replacements:bool=True, *args, **kwargs):
+        """
+
+        Args:
+            corpus ():
+            subtractions ():
+            replacements ():
+            *args ():
+            **kwargs ():
+        """
         super(Graph_Recurser, self).__init__(corpus, *args, **kwargs)
 
         self.subtractions = subtractions

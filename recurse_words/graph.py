@@ -11,9 +11,153 @@ from colorcet import fire
 
 from PIL import ImageDraw, ImageFont
 
-fnt = ImageFont.truetype('/Users/jonny/Library/Fonts/FreeSans-LrmZ.ttf')
+from recurse_words import Graph_Recurser, Recurser
 
-from recurse_words import Graph_Recurser
+class Graph(object):
+    """
+    Represent and manipulate a :class:`.Recurser` object as a graph!
+
+    Attributes:
+        filtered_edges (:class:`pandas.DataFrame`): Edges after some call to :meth:`.Graph.filter`, initialized
+            as :attr:`.Graph.edges`.
+    """
+
+    def __init__(self, recurser:Graph_Recurser):
+        self._edges = pd.DataFrame()
+        self._untranslated_edges = pd.DataFrame()
+        self._filtered_edges = pd.DataFrame()
+
+        self.recurser = recurser
+
+
+    def _translate_edges(self, edges: pd.DataFrame) -> pd.DataFrame:
+        for col in edges.columns:
+            edges[col].replace(
+                to_replace=self.recurser.corpus._retranslate_lut,
+                inplace=True
+            )
+        return edges
+
+    def _sort_edges(self, edges: pd.DataFrame) -> pd.DataFrame:
+        """
+        Sort edges in order of source, subword, replacement, target
+        """
+        return edges.sort_values(by=('source', 'subword', 'replacement', 'target'),
+                                axis=1, ignore_index=True)
+
+    @property
+    def edges(self) -> pd.DataFrame:
+        """
+        Pandas dataframe of all edges, in columns:
+
+        ``('source', 'subword', 'replacement', 'target')``
+
+        If corpus has a translation layer, edges should be the translated version of the edges.
+
+        Returns:
+            :class:`pandas.DataFrame`
+        """
+        if len(self._edges) == 0:
+            self._edges = self.untranslated_edges.copy()
+
+            if len(self.recurser.corpus._retranslate_lut)>0:
+                self._edges = self._sort_edges(self._translate_edges(self._edges))
+
+
+        return self._edges
+
+    @property
+    def untranslated_edges(self) -> pd.DataFrame:
+        """
+        Precurser to :attr:`.Graph.edges`, gets edges before they're translated back to human-readable.
+
+        Equivalent to edges if there is no translation layer
+
+        Returns:
+            :class:`pandas.DataFrame`
+        """
+        if len(self._untranslated_edges) == 0:
+            _edges = pd.DataFrame(self.recurser.word_edges,
+                                       columns=['source', 'label', 'target'])
+            _edges[['subword', 'replacement']] = _edges['label'].str.split('_', expand=True)
+            _edges.drop('label', axis=1, inplace=True)
+            _edges = _edges[['source', 'subword', 'replacement', 'target']]
+            self._untranslated_edges = self._sort_edges(_edges)
+        return self._untranslated_edges
+
+
+    @property
+    def filtered_edges(self) -> pd.DataFrame:
+        """
+        Edges after being filtered by :meth:`.Graph.filter`
+
+        Until then, equivalent to :attr:`.Graph.edges`
+
+        Should be used by all graph generating mechanisms rather than
+            :attr:`.Graph.edges`, which is intended to be the immutable source of edges.
+
+        Returns:
+            :class:`pandas.DataFrame`
+        """
+        if len(self._filtered_edges) == 0:
+            self._filtered_edges = self.edges
+        return self._filtered_edges
+
+
+    def filter(self, root_word: str, depth:int=0) -> pd.DataFrame:
+        """
+        Filter the graph from some root word and depth
+
+        Note that this words off the original, untranslated edges to avoid any loss of meaning
+        that might happen in the mapping from the network edge space to the human-readable space,
+        eg. in the :class:`.corpi.CMUDict` phonetic corpus, multiple english words map to a single
+        phonetic representation, so when translated back to english one is chosen at random.
+        Filtering in the network space avoids the ambiguity, hopefully.
+
+        Args:
+            root_word (str): Root word to
+            depth (int): number of additional steps to take. 0 returns just the words immediately
+                connected to the root word.
+
+        Returns:
+            :class:`pandas.DataFrame`
+        """
+
+        if len(self.recurser.corpus._retranslate_tul) > 0:
+            root_word = self.recurser.corpus._retranslate_tul[root_word]
+
+        filtered_edges = self.untranslated_edges[self.untranslated_edges['source'] == root_word]
+
+        if depth > 0:
+            _filtered = pd.DataFrame()
+            for i in range(depth):
+                _filtered = self.untranslated_edges[
+                    self._untranslated_edges['source'].isin(
+                        filtered_edges['target']
+                    )
+                ]
+
+            filtered_edges = pd.concat((filtered_edges, _filtered))
+
+        filtered_edges = self._sort_edges(filtered_edges)
+        self._filtered_edges = filtered_edges.copy()
+        return filtered_edges
+
+    def make_datashader(self):
+        # TODO
+        pass
+
+
+
+
+
+
+
+
+
+
+
+
 
 def datashader_network(recurser:Graph_Recurser,
                        root_word: typing.Optional[str] = None,
