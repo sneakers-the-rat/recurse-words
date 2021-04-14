@@ -34,7 +34,8 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
     'sphinx.ext.napoleon',
-    'sphinx.ext.todo'
+    'sphinx.ext.todo',
+    'autodocsumm'
 ]
 
 napoleon_google_docstring = True
@@ -54,7 +55,8 @@ autodoc_default_options = {
     'private-members': True,
     'show-inheritance': False,
     'toctree': True,
-    'undoc-members': True
+    'undoc-members': True,
+    'autosummary': True
 }
 
 # Add any paths that contain templates here, relative to this directory.
