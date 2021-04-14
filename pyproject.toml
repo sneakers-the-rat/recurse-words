@@ -14,6 +14,8 @@ tqdm = "^4.60.0"
 pygraphviz = "^1.7"
 requests = "^2.25.1"
 datashader = "^0.12.1"
+sphinx = {version="^3.5.4", optional = true}
+furo = {version = "^2021.4.11-beta.34", optional=true}
 
 [tool.poetry.dev-dependencies]
 
