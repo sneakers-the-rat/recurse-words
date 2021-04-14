@@ -13,8 +13,12 @@ python = "^3.7"
 tqdm = "^4.60.0"
 pygraphviz = "^1.7"
 requests = "^2.25.1"
+datashader = "^0.12.1"
 
 [tool.poetry.dev-dependencies]
+
+[tool.poetry.extras]
+docs = ["sphinx", "furo"]
 
 [build-system]
 requires = ["poetry>=0.12"]

@@ -57,6 +57,24 @@ class Recurser(object):
 
         self.load_words(self.corpus.corpus)
         self.word_trees = {} # type: typing.Dict[str, typing.List[typing.Union[typing.List, typing.Tuple[str,str,str]],...]]
+        self._word_edges = [] # type: typing.List[typing.Tuple[str, str, str], ...]
+
+
+    @property
+    def word_edges(self) -> typing.List[typing.Tuple[str, str, str]]:
+        """
+        word_trees except for just a list of the edges
+        after they have been made unique by calling set()
+
+        Returns:
+            [(from_word, transformation, to_word),...]
+        """
+        if len(self._word_edges) == 0:
+            _word_edges = []
+            for tree in self.word_trees.values():
+                _word_edges.extend(tree)
+            self._word_edges = list(set(_word_edges))
+        return self._word_edges
 
     def load_words(self, corpus:typing.List[str]):
         word_lengths = {}
@@ -139,7 +157,8 @@ class Recurser(object):
                           min_test_word:int=2,
                           min_clipped_word:int=3,
                           max_depth:int=0,
-                          n_procs:int=12):
+                          n_procs:int=12,
+                          batch_size:int=100):
         """
         Populate :attr:`.word_trees` by searching recursively through words for recurse words
 
@@ -151,9 +170,15 @@ class Recurser(object):
             max_depth (int): Maximum recursion depth to allow, if 0, infinite
             n_procs (int): Number of processors to spawn in the multiprocessing pool
         """
-        hit_pbar = tqdm(position=2)
+        hit_pbar = tqdm(position=0,leave=True)
+        # if we have already partially processed some, start there
+        if len(self.word_trees)>0:
+            lens = [len(word) for word in self.word_trees.keys()]
+            start_range = min(lens)-1
+        else:
+            start_range = min_include_word
         with mp.Pool(n_procs) as pool:
-            for length in tqdm(range(min_include_word, max(self.words.keys())), position=0):
+            for length in tqdm(range(start_range, max(self.words.keys())), position=1,leave=True):
                 # skip discontinuities in word lengths (???)
                 if length not in self.words.keys():
                     continue
@@ -175,8 +200,8 @@ class Recurser(object):
                 # --------------------------------------------------
                 # doin the it
                 # --------------------------------------------------
-                word_pbar = tqdm(total=len(test_words), position=1)
-                for word_tree in pool.imap_unordered(self.recurse_word, iterator, chunksize=100):
+                word_pbar = tqdm(total=len(test_words), position=2,leave=True)
+                for word_tree in pool.imap_unordered(self.recurse_word, iterator, chunksize=batch_size):
 
                     if len(word_tree)>0:
                         # get the root word by just digging into the word tree
@@ -278,6 +303,7 @@ class Recurser(object):
             self._by_depth = self._reindex_trees(recursive_depth)
         return self._by_depth
 
+
     def draw_graph(self, trees:typing.Union[dict, list, str], output_dir:Path, extension:str=".svg",
                    graph_attr:dict={}, node_attr:dict={},edge_attr:dict={},translate=True):
         """
@@ -301,41 +327,42 @@ class Recurser(object):
             trees = {word:self.word_trees[word] for word in trees}
 
         for word, tree in tqdm(trees.items()):
-            if hasattr(self.corpus, '_phone_to_word') and translate is True:
-                word = self.corpus._phone_to_word[word]
-                tree = recursive_translate(tree, self.corpus._phone_to_word)
+            if len(self.corpus._retranslate_lut)>0 and translate is True:
+                word = self.corpus._retranslate_lut[word]
+                tree = recursive_translate(tree, self.corpus._retranslate_lut)
             g = pgv.AGraph(directed=True,
                            strict=False,
                            title=word)
+
+
+            for node_from, label, node_to in set(recursive_walk(tree)):
+                g.add_edge(node_from, node_to, label=label)
+
             g.graph_attr.update({
                 'fontname': "Helvetica",
                 'rankdir': 'LR',
-                'nodesep': 0.6,
+                'nodesep': 1,
                 'ranksep': 1
             })
 
             g.node_attr.update({
                 'shape': 'rectangle',
-                'penwidth':2,
-                'fontname':'Helvetica',
-                'style':'rounded'
+                'penwidth': 2,
+                'fontname': 'Helvetica',
+                'style': 'rounded'
             })
 
             g.edge_attr.update({
                 'color': '#666666',
-                'arrowsize':0.5,
-                'arrowhead':'open',
-                'labelfontcolor':'#666666'
+                'arrowsize': 0.5,
+                'arrowhead': 'open',
+                'labelfontcolor': '#666666'
             })
 
             g.graph_attr.update(graph_attr)
             g.node_attr.update(node_attr)
             g.edge_attr.update(edge_attr)
-
-            for node_from, label, node_to in set(recursive_walk(tree)):
-                g.add_edge(node_from, node_to, label=label)
-
-            g.layout('dot')
+            g.layout('sfdp')
             g.draw(str((output_dir / word).with_suffix(extension)))
 
 
