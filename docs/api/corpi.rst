@@ -2,6 +2,7 @@ Corpi
 ======
 
 .. autosummary::
+    :recursive:
 
     recurse_words.corpi
 
