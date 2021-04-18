@@ -162,8 +162,8 @@ class Graph(object):
 def datashader_network(recurser:Graph_Recurser,
                        root_word: typing.Optional[str] = None,
                         depth:int=0,
-                       res=(10000,10000),
-                       cmap_min=65):
+                       numbered=True,
+                       labels=False):
     print('Extracting nodes and edges...')
     edges = recurser.word_edges.copy()
 
@@ -201,24 +201,35 @@ def datashader_network(recurser:Graph_Recurser,
     nodes_rev = nodes.reset_index().set_index('name')
 
     df_edges = pd.DataFrame(edges, columns=('source', 'label', 'target'))
-    edge_df = pd.DataFrame({'source':np.squeeze(nodes_rev.loc[df_edges.source].values),
-                           'target':np.squeeze(nodes_rev.loc[df_edges.target].values)})
+    if not labels:
+        df_edges = df_edges[['source', 'target']]
+    if numbered:
+        df_edges = pd.DataFrame({'source':np.squeeze(nodes_rev.loc[df_edges.source].values),
+                               'target':np.squeeze(nodes_rev.loc[df_edges.target].values)})
+    return nodes, df_edges
 
+def datashader_layout(nodes, edges, atlas_kwargs = {}, hammer_kwargs = {}):
     print('Laying Out Network...')
-    net_layout = forceatlas2_layout(nodes, edge_df)
+    net_layout = forceatlas2_layout(nodes, edges, **atlas_kwargs)
     print('Bundling edges...')
-    edge_layout = hammer_bundle(net_layout, edge_df)
+    edge_layout = hammer_bundle(net_layout, edges, **hammer_kwargs)
+    return net_layout, edge_layout
+
+def datashader_canvas(net_layout, edge_layout,
+                       res=(10000,10000),
+                       cmap_min=65,
+                      canvas_kwargs = {}):
 
     print('Constructing Canvas...')
     xr = net_layout.x.min(), net_layout.x.max()
     yr = net_layout.y.min(), net_layout.y.max()
-    canvas = ds.Canvas(x_range=xr, y_range=yr, plot_width=res[0], plot_height=res[1])
+    canvas = ds.Canvas(x_range=xr, y_range=yr, plot_width=res[0], plot_height=res[1], **canvas_kwargs)
     agg=canvas.points(net_layout, 'x', 'y')
     spread_points = tf.spread(tf.shade(agg, cmap=['#FFFFFF']), px=3, name='network!')
     spread_edges = tf.shade(canvas.line(edge_layout, 'x', 'y', agg=ds.count()), cmap=fire[cmap_min:], name='edges!')
     stack = tf.stack(spread_edges, spread_points, how='over', name='network!!!')
     stack = tf.set_background(stack, "#000000")
-    return stack, net_layout, edge_layout
+    return stack
 
 
 # img = tf.Image(stack).to_pil()

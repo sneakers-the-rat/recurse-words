@@ -9,7 +9,7 @@ import pygraphviz as pgv
 import networkx as nx
 
 from recurse_words.corpi import get_corpus
-from recurse_words import Recurser
+from recurse_words.recursers.recurser import Recurser
 
 class Graph_Recurser(Recurser):
     """
