@@ -30,3 +30,6 @@ docs = ["sphinx", "furo", "autodocsumm"]
 [build-system]
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
+
+[tool.poetry2conda]
+name = "recurse-words"
